@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+{% extends "base.html" %} {% block body %}
+
+<body>
+    <section>
+        {%if InstanceStatus%} {%for i in InstanceStatus%}
+        <fieldset style="left">
+            <legend>VPN服务器: {{i.get('InstanceId')}}
+            </legend>
+            <legend>VPN服务器IP:</legend>
+            <legend> {%for j in i.get('PublicIpAddress').get('IpAddress')%} {{j}} {%end%}
+            </legend>
+            <legend>VPN服务器状态:</legend>
+            <legend>{{i.get('Status')}}</legend>
+            <legend>VPN服务器释放时间:</legend>
+            <legend>{{i.get('AutoReleaseTime')}}</legend>
+        </fieldset>{% end %} {%else%}
+        <legend>VPN服务器：</legend>
+        <legend>正在休假中</legend> {% end %}
+        <hr/>
+    </section>
+</body>
+{%end%}
+
+</html>
