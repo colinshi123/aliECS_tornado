@@ -1,12 +1,5 @@
-import hashlib
-
-with open('config.json','rb') as  file:
-    f = file.read()
-    m = hashlib.md5()
-    m.update(f)
-    print(m.hexdigest())
-with open('config.json.bak','rb') as  file:
-    f = file.read()
-    m = hashlib.md5()
-    m.update(f)
-    print(m.hexdigest())
+import os
+print (os.getcwd(),'获得当前工作目录')
+print (os.path.abspath('.'),'获得当前工作目录')
+print (os.path.abspath('..'),'获得当前工作目录的父目录')
+print (os.path.abspath(os.curdir),'获得当前工作目录')

@@ -2,7 +2,7 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.options
 import tornado.web
-import os.path
+import os
 import time
 import hashlib
 import json
@@ -100,29 +100,38 @@ class VPNHandler(BaseHandler):
         SpotStrategy = self.get_argument('SpotStrategy')
         Time  = self.get_argument('TIME')
         DateTime = time.strftime('%Y-%m-%d'+'T'+'%H'+':59'+':00'+'Z',time.localtime(time.time()-(3600*(8-int(Time)))))
-        InstanceStatus  = AliECS().Instances_status(self.CITY)
+        ecs_obj = AliECS(self.CITY, Time)
+        InstanceStatus  = ecs_obj.Instances_status(self.CITY)
         if self.CITY not in alibaba_cloud_config.get('city'):
             self.render('alwaysvpn.html', **{'aaa':'世界服务器版本正在研发中，请赞助100元，开通美国服务器'})
         elif Time not in ('1','2','3','4'):
             self.render('alwaysvpn.html', **{'aaa':'请联系colinshi，给钱就给你开(每月收费20元)'})
         else:
+            print(InstanceStatus.get('Instances').get('Instance'))
             if InstanceStatus.get('TotalCount') == 0:
-                Instance_Id = AliECS().create_after_pay_instance(
-                                IMAGE_ID, INSTANCE_TYPE, SECURITY_GROUP_ID,
-                                InternetMaxOut, Password, SpotStrategy)
-                time.sleep(3)
-                AliECS().Auto_Release_Time(Instance_Id, DateTime)
-                time.sleep(1)
-                ipaddress=AliECS().Add_Ip(Instance_Id)
-                time.sleep(1)
-                AliECS().Domain_Record('VPN','A',ipaddress.get('IpAddress'))
-                AliECS().Start_Instance(Instance_Id)
-                InstanceStatus  = AliECS().Instances_status(self.CITY)
+                Instance_Id = ecs_obj.create_after_pay_instance(
+                    IMAGE_ID, INSTANCE_TYPE, SECURITY_GROUP_ID,
+                    InternetMaxOut, Password, SpotStrategy)
+                ecs_status = InstanceStatus.get('Instances').get('Instance')
+                while ecs_status == [] :
+                    time.sleep(1)
+                    InstanceStatus = ecs_obj.Instances_status(self.CITY)
+                    ecs_status = InstanceStatus.get('Instances').get('Instance')
+                while ecs_status[0].get('Status') not in ('Running', 'Stopped'):
+                    time.sleep(1)
+                    InstanceStatus = ecs_obj.Instances_status(self.CITY)
+                    ecs_status = InstanceStatus.get('Instances').get('Instance')
+                ecs_obj.Auto_Release_Time(Instance_Id, DateTime)
+                ipaddress = ecs_obj.Add_Ip(Instance_Id)
+                ecs_obj.Domain_Record('VPN','A',ipaddress.get('IpAddress'))
+                ecs_obj.Start_Instance(Instance_Id)
+                InstanceStatus  = ecs_obj.Instances_status(self.CITY)
             self.render('vpnlist.html',**{'InstanceStatus':InstanceStatus.get('Instances').get('Instance')})
 
     @tornado.web.authenticated
     def get(self):
-        InstanceStatus = AliECS().Instances_status('cn-hongkong')
+        ecs_obj = AliECS()
+        InstanceStatus = ecs_obj.Instances_status('cn-hongkong')
         if InstanceStatus.get('TotalCount') > 0:
             self.render('vpnlist.html',**{'InstanceStatus':InstanceStatus.get('Instances').get('Instance')})
         else:

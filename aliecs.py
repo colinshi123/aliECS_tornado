@@ -18,9 +18,12 @@ from aliyunsdkecs.request.v20140526.DescribeInstanceAttributeRequest import Desc
 
 
 class AliECS(object):
+    def __init__(self, city = 'cn-hongkong', time = 2):
+        self.city = city
+        self.time = 2
+
 
     #创建ecs实例
-
     def create_after_pay_instance(self, image_id, instance_type, security_group_id, internetmaxbandwidthout, password, spotstrategy):
         request = CreateInstanceRequest();
         request.add_query_param('InternetMaxBandwidthOut', 100)
